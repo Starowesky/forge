@@ -1,12 +1,5 @@
 name: Build iOS IPA
 
-# Full RoboVM AOT build of the iOS app on a macOS runner, producing an
-# UNSIGNED forge-ios.ipa artifact.
-#
-# The AOT compile takes ~30-60 minutes on a hosted macOS runner, so this is
-# manual-dispatch / release-time only — the cheap per-PR iOS check is the
-# separate Linux "iOS compatibility gate" workflow.
-
 on:
   workflow_dispatch:
     inputs:
@@ -41,15 +34,12 @@ jobs:
       - name: Cache RoboVM SDK + AOT cache
         uses: actions/cache@v5
         with:
-          path: |
-            ~/.robovm
+          path: ~/.robovm
           key: robovm-${{ runner.os }}-${{ hashFiles('forge-gui-ios/pom.xml') }}
 
       - name: Build unsigned IPA
-        # SKIP_CACHE_CLEAR reuses the (content-hashed, safe) RoboVM AOT cache
-        # restored above — cuts rebuild time dramatically on cache hits.
-                run: |
-          sed -i '' 's/${revision}/2.0.16/g' forge-gui-ios/pom.xml
+        run: |
+          sed -i '' 's/\${revision}/2.0.16/g' forge-gui-ios/pom.xml
           sed -i '' 's/^    VERSION=.*/    VERSION="2.0.16"/' forge-gui-ios/pipeline/ios-pipeline.sh
           sed -i '' 's/^app.version=.*/app.version=2.0.16/' forge-gui-ios/robovm.properties.template
           SKIP_CACHE_CLEAR=1 bash forge-gui-ios/pipeline/ios-pipeline.sh ipa
